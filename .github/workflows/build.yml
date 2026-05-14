@@ -1,0 +1,47 @@
+name: Build Binaries
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-14        # Apple Silicon (M1/M2/M3)
+            artifact: dji_mission_builder-mac-arm64
+          - os: macos-13        # Intel Mac
+            artifact: dji_mission_builder-mac-intel
+          - os: windows-latest
+            artifact: dji_mission_builder-windows.exe
+          - os: ubuntu-latest
+            artifact: dji_mission_builder-linux
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build binary (Mac / Linux)
+        if: runner.os != 'Windows'
+        run: |
+          pyinstaller --onefile --name ${{ matrix.artifact }} dji_mission_builder.py
+
+      - name: Build binary (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          pyinstaller --onefile --name dji_mission_builder-windows dji_mission_builder.py
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/${{ matrix.artifact }}*
