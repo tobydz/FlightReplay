@@ -748,6 +748,9 @@ def main() -> None:
         "--gimbal-settle", type=float, default=3.0,
         help="Seconds allocated for gimbal to reach target angle before shutter fires",
     )
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(0)
     args = parser.parse_args()
     run(
         images_folder=args.images,
